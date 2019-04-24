@@ -34,15 +34,48 @@ public class MemberController {
 		this.mVali = mVali;
 	}
 
-	@RequestMapping(value = "FavoriteList.mem")
-	public void favoriteList(HttpServletRequest req, HttpServletResponse resp) throws Exception{
+	@RequestMapping(value = "ViewingActivityList.mem")
+	public ModelAndView ViewingActivityList(HttpServletRequest req){
+		ModelAndView mv = new ModelAndView();
 		String serial = req.getParameter("serial");
+		System.out.println("serial");
+		mDao.setListSize(5);
+		mDao.setNowPage(1);
+		List<ViewingActivityVo> firstData = mDao.viewingActivityList(serial);
+		if(req.getParameter("nowPage") != null) {
+			int nowPage = Integer.parseInt(req.getParameter("nowPage"));
+			mDao.setNowPage(nowPage);
+		}else {
+			mDao.setNowPage(2);	
+		}
 		
-		PrintWriter out = resp.getWriter();
+		List<ViewingActivityVo> listData = mDao.viewingActivityList(serial);
+		
+		mv.addObject("viewingFirstData", firstData);
+		mv.addObject("viewingListtData", listData);
+		mv.addObject("viewingPage",mDao);
+		
+		
+		mv.setViewName("index.jsp?content=./member/member_myinfo/myinfo.jsp");
+		return mv;
+	}
 	
-		String json = mDao.favorList(serial);
+	@RequestMapping(value = "FavoriteList.mem")
+	public ModelAndView favoriteList(HttpServletRequest req){
+		ModelAndView mv = new ModelAndView();
+		String serial = req.getParameter("serial");
+		int nowPage = Integer.parseInt(req.getParameter("nowPage"));
+		mDao.setListSize(4);
+		mDao.setNowPage(nowPage);
+		List<FavoriteVo> data = mDao.favorList(serial);
 		
-		out.print(json);
+		
+		mv.addObject("favoriteList",data);
+		mv.addObject("favoritPage",mDao);
+		mv.setViewName("index.jsp?content=./member/member_myinfo/myfavorite.jsp");
+		
+		return mv;
+		
 	}
 	
 	
@@ -188,14 +221,6 @@ public class MemberController {
 		mv.setViewName("member/login.jsp");
 		return mv;
 	}
-
-	@RequestMapping(value = "myinfo.mem")
-	public ModelAndView myinfo(HttpServletRequest req) {
-		ModelAndView mv = new ModelAndView();
-		mv.setViewName("index.jsp?content=./member/member_myinfo/myinfo.jsp");
-		return mv;
-	}
-
 	@RequestMapping(value = "payinfo.mem")
 	public ModelAndView payinfo(HttpServletRequest req) {
 		ModelAndView mv = new ModelAndView();
@@ -380,7 +405,7 @@ public class MemberController {
 		String pwd = req.getParameter("pwd");
 		String chgPwd = req.getParameter("chgPwd");
 		String email = req.getParameter("email");
-
+		
 		b = mDao.pwdchg(pwd, chgPwd, email);
 
 		if (b) {
@@ -413,8 +438,9 @@ public class MemberController {
 		boolean b = false;
 
 		String phone = req.getParameter("phone");
+		String nickName = req.getParameter("nickName");
 
-		b = mDao.phoneChg(phone);
+		b = mDao.phoneChg(phone,nickName);
 
 		if (b) {
 			out.print("true");

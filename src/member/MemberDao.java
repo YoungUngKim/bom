@@ -22,7 +22,7 @@ public class MemberDao implements Member {
 	public int endPage;
 	public int startPage;
 	
-	public int listSize = 10;//페이지당 리스트수
+	public int listSize = 4;//페이지당 리스트수
 	public int blockSize = 5;
 	public int nowPage =1;
 	
@@ -31,12 +31,25 @@ public class MemberDao implements Member {
 	public MemberDao() {
 		sqlSession = MybatisFactory.getFactory().openSession();
 	}
-
 	
-	public String favorList(String serial){
+	public List<ViewingActivityVo> viewingActivityList(String serial){
+		String viewingTable = "viewingactivity_"+serial;
+		int cnt = sqlSession.selectOne("member.viweingPage", viewingTable);	
+		pageCompute(cnt);
+		Page p = new Page();
+		p.setStartNo(this.startNo);
+		p.setEndNo(this.endNo);
+		p.setC_tableName(serial);
+		p.setC_tableName1(serial);
+		p.setC_tableName2(serial);
+		List<ViewingActivityVo> data = sqlSession.selectList("member.viewingActivityList", p);
 		
+		return data;
+	}
+	
+	public List<FavoriteVo> favorList(String serial){
+		System.out.println(serial);
 		String favorTable = "favorite_"+serial;
-		StringBuilder sb = new StringBuilder();
 		int cnt = sqlSession.selectOne("member.favorPage", favorTable);
 		pageCompute(cnt);
 		Page p = new Page();
@@ -49,19 +62,8 @@ public class MemberDao implements Member {
 		
 		List<FavoriteVo> data = sqlSession.selectList("member.favorList", p);
 		
-		if(data.size() != 0 ) {
-			sb.append("[");
-			sb.append(data.get(0).toJSON());
-			for(int i = 1 ; i<data.size();i++) {
-				sb.append(",");
-				sb.append(data.get(i).toJSON());
-			}
-			sb.append("]");
-		}else {
-			sb = null;
-		}
 		
-		return sb.toString();
+		return data;
 	}
 	
 
@@ -239,20 +241,35 @@ public class MemberDao implements Member {
 		
 		 vo.setM_email(email);
 		 vo.setM_password(pwd);
-		 
 			b = sqlSession.selectOne("member.pwdSearch",vo);
+			System.out.println(b);
 			 if(b) {
-				 sqlSession.update("member.chgSearch",chgPwd);
-				 sqlSession.commit();
-				 b=true;
+				 vo.setM_password(chgPwd);
+				 System.out.println(vo.getM_password());
+				 int cnt = sqlSession.update("member.chgSearch",vo);
+				 System.out.println(cnt);
+				 if(cnt >0) {
+					 b=true;
+					 sqlSession.commit();	 
+				 }
+				 
+				 
 			 }
-			 
+			 System.out.println("b는실행안했지만 여기까지왔다");
 		return b;
 	}
 	
-	public boolean phoneChg(String phone) {
+	public boolean phoneChg(String phone, String nickName) {
 		boolean b = false;
-		int a = sqlSession.update("member.phoneChg",phone);
+		MemberVo vo = new MemberVo();
+		
+		vo.setM_phone(phone);
+		vo.setM_nickName(nickName);
+		
+		int a = sqlSession.update("member.phoneChg",vo);
+		
+		System.out.println("a" + a);
+		
 			 if(a>0) {
 				 sqlSession.commit();
 				 b=true;
